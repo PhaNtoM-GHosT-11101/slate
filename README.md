@@ -104,9 +104,9 @@ the toggle off to stop it and restore the factory shortcuts.
 
 ### Pen
 
-Turn on **Custom pressure range** and drag the sliders to change which raw
-pressure values count as the lightest and heaviest strokes. The live pad below
-shows `X`, `Y`, pressure, tilt, and whether the pen is in range. It reads
+Turn on **Custom pressure range** and drag the sliders to choose the lightest
+and heaviest points of the pen's pressure curve, from 0% to 100%. The live pad
+below shows `X`, `Y`, pressure, tilt, and whether the pen is in range. It reads
 `/dev/input/event*` directly, so it works without focusing the window.
 
 ### Express keys
