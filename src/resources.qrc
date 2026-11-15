@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="Main.qml">Main.qml</file>
+        <file alias="pages/MappingPage.qml">pages/MappingPage.qml</file>
+        <file alias="pages/PenPage.qml">pages/PenPage.qml</file>
+        <file alias="pages/KeysPage.qml">pages/KeysPage.qml</file>
+        <file alias="components/AppButton.qml">components/AppButton.qml</file>
+        <file alias="components/Card.qml">components/Card.qml</file>
+        <file alias="components/Choice.qml">components/Choice.qml</file>
+        <file alias="components/KeyRow.qml">components/KeyRow.qml</file>
+        <file alias="components/NumberField.qml">components/NumberField.qml</file>
+        <file alias="components/PageHeader.qml">components/PageHeader.qml</file>
+        <file alias="components/PenPad.qml">components/PenPad.qml</file>
+        <file alias="components/Toggle.qml">components/Toggle.qml</file>
+        <file alias="i18n/en.json">i18n/en.json</file>
+    </qresource>
+</RCC>

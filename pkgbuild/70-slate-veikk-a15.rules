@@ -1,0 +1,3 @@
+# Allow the logged-in desktop user to read the VEIKK A15 pen and express-key
+# event nodes without joining the input group. The ACL is applied on login.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{idVendor}=="2feb", ATTRS{idProduct}=="0004", TAG+="uaccess"

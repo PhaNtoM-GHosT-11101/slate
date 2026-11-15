@@ -1,0 +1,6 @@
+# The VEIKK A15 reports absolute axes without resolution, so libinput rejects
+# it as "missing x/y resolution". Supply the A15's 254 x 152.4 mm active area
+# in units of 100 dots per mm for each axis.
+evdev:input:b0003v2FEBp0004*
+ EVDEV_ABS_00=::129
+ EVDEV_ABS_01=::215

@@ -1,0 +1,40 @@
+# Maintainer: Aditya <aditya@localhost>
+pkgname=slate
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Graphical settings app for the VEIKK A15 drawing tablet"
+arch=('x86_64')
+url="https://github.com/PhaNtoM-GHosT-11101/slate"
+license=('MIT')
+depends=('qt6-base' 'qt6-declarative' 'qt6-wayland' 'wtype')
+makedepends=('qt6-base')
+optdepends=('hyprland: required for screen mapping and tablet settings')
+source=("slate-$pkgver.tar.gz"
+        "slate.desktop"
+        "slate.svg"
+        "slate.service"
+        "70-slate-veikk-a15.rules"
+        "61-veikk-a15.hwdb")
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP')
+
+build() {
+    cd "$srcdir/slate-$pkgver"
+    qmake6 PREFIX=/usr slate.pro
+    make
+}
+
+package() {
+    cd "$srcdir/slate-$pkgver"
+    install -Dm755 slate "$pkgdir/usr/bin/slate"
+    install -Dm644 "$srcdir/slate.desktop" "$pkgdir/usr/share/applications/slate.desktop"
+    install -Dm644 "$srcdir/slate.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/slate.svg"
+    install -Dm644 "$srcdir/slate.service" "$pkgdir/usr/lib/systemd/user/slate.service"
+    install -Dm644 "$srcdir/70-slate-veikk-a15.rules" "$pkgdir/usr/lib/udev/rules.d/70-slate-veikk-a15.rules"
+    install -Dm644 "$srcdir/61-veikk-a15.hwdb" "$pkgdir/usr/lib/udev/hwdb.d/61-veikk-a15.hwdb"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
