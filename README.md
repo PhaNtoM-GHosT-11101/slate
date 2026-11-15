@@ -111,6 +111,8 @@ shows `X`, `Y`, pressure, tilt, and whether the pen is in range. It reads
 
 ### Express keys
 
+![Slate express keys page](docs/slate-keys.png)
+
 Each row can be set to:
 
 | Action | Behaviour |
