@@ -1,0 +1,34 @@
+#!/bin/sh
+# Apply the repository description and discovery topics with GitHub CLI.
+# Requires `gh auth login` first. Safe to run more than once.
+set -eu
+
+REPO="${SLATE_REPO:-PhaNtoM-GHosT-11101/slate}"
+
+if ! command -v gh >/dev/null 2>&1; then
+    echo "setup-github: gh is not installed" >&2
+    exit 1
+fi
+if ! gh auth status >/dev/null 2>&1; then
+    echo "setup-github: run 'gh auth login' first" >&2
+    exit 1
+fi
+
+gh repo edit "$REPO" \
+    --description "Settings app and express-key helper for the VEIKK A15 drawing tablet on Linux" \
+    --homepage "https://github.com/$REPO#readme" \
+    --add-topic veikk \
+    --add-topic veikk-a15 \
+    --add-topic drawing-tablet \
+    --add-topic tablet-driver \
+    --add-topic hyprland \
+    --add-topic omarchy \
+    --add-topic qt6 \
+    --add-topic qml \
+    --add-topic wayland \
+    --add-topic linux \
+    --add-topic express-keys \
+    --add-topic input-devices
+
+echo "Updated description and topics for $REPO."
+echo "Next: git tag -a v0.2.0 -m 'Slate 0.2.0' && git push origin v0.2.0"

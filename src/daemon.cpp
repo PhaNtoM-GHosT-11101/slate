@@ -67,13 +67,42 @@ bool Daemon::start(QString *error)
     m_quitPoll.start();
 
     ensureWaylandEnvironment();
+    // Make sure the watch directory exists even on a first run. Otherwise the
+    // helper starts with no bindings file and would never notice the GUI
+    // creating it later.
+    QDir().mkpath(QFileInfo(SlateBindings::keysPath()).absolutePath());
     reloadBindings();
+    if (usesMouse()) {
+        QString mouseError;
+        if (!m_mouse.ensureReady(&mouseError))
+            qWarning().noquote() << "slate:" << mouseError;
+    }
 
     tryOpen();
     m_retry.start();
 
     qInfo().noquote() << "slate: express-key helper started";
     return true;
+}
+
+bool Daemon::isWaylandSession() const
+{
+    const QByteArray forced = qgetenv("SLATE_REPLAY").trimmed().toLower();
+    if (forced == "wtype" || forced == "wayland")
+        return true;
+    if (forced == "xdotool" || forced == "x11")
+        return false;
+    return qEnvironmentVariable("XDG_SESSION_TYPE").compare(QStringLiteral("wayland"), Qt::CaseInsensitive) == 0
+        || !qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY");
+}
+
+bool Daemon::usesMouse() const
+{
+    for (auto it = m_bindings.cbegin(); it != m_bindings.cend(); ++it) {
+        if (it->action == QStringLiteral("mouse"))
+            return true;
+    }
+    return false;
 }
 
 void Daemon::ensureWaylandEnvironment()
@@ -83,6 +112,15 @@ void Daemon::ensureWaylandEnvironment()
         qputenv("XDG_RUNTIME_DIR", runtime);
     }
     if (!qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY"))
+        return;
+    // A systemd user service does not inherit the graphical session's
+    // environment, so find the compositor socket ourselves. Do not do this on
+    // an explicit X11 session (or a forced xdotool setup), where a stale
+    // Wayland socket could otherwise make us choose wtype over xdotool.
+    const QByteArray forced = qgetenv("SLATE_REPLAY").trimmed().toLower();
+    if (forced == "xdotool" || forced == "x11")
+        return;
+    if (qEnvironmentVariable("XDG_SESSION_TYPE").compare(QStringLiteral("x11"), Qt::CaseInsensitive) == 0)
         return;
 
     const QDir runtime(qEnvironmentVariable("XDG_RUNTIME_DIR"));
@@ -213,6 +251,13 @@ void Daemon::trigger(const SlateKeys::Combo &combo)
         return;
     }
 
+    if (binding.action == QStringLiteral("mouse")) {
+        QString why;
+        if (!m_mouse.trigger(binding.value, &why))
+            qWarning().noquote() << "slate:" << why;
+        return;
+    }
+
     if (binding.action == QStringLiteral("keys")) {
         SlateKeys::Combo output;
         QString why;
@@ -220,18 +265,42 @@ void Daemon::trigger(const SlateKeys::Combo &combo)
             qWarning().noquote() << "slate:" << why;
             return;
         }
-        runWtype(output);
+        replayCombo(output);
         return;
     }
 
-    runWtype(combo);
+    replayCombo(combo);
+}
+
+void Daemon::replayCombo(const SlateKeys::Combo &combo)
+{
+    if (isWaylandSession())
+        runWtype(combo);
+    else
+        runXdotool(combo);
 }
 
 void Daemon::runWtype(const SlateKeys::Combo &combo)
 {
+    if (QStandardPaths::findExecutable(QStringLiteral("wtype")).isEmpty()) {
+        runXdotool(combo);
+        return;
+    }
     const QStringList args = SlateKeys::wtypeArgs(combo);
     if (!QProcess::startDetached(QStringLiteral("wtype"), args))
         qWarning().noquote() << "slate: could not start wtype for" << combo.toString();
+}
+
+void Daemon::runXdotool(const SlateKeys::Combo &combo)
+{
+    if (QStandardPaths::findExecutable(QStringLiteral("xdotool")).isEmpty()) {
+        qWarning().noquote() << "slate: neither wtype nor xdotool is installed; cannot replay"
+                             << combo.toString();
+        return;
+    }
+    const QStringList args = SlateKeys::xdotoolArgs(combo);
+    if (!QProcess::startDetached(QStringLiteral("xdotool"), args))
+        qWarning().noquote() << "slate: could not start xdotool for" << combo.toString();
 }
 
 void Daemon::writeStatus(const SlateKeys::Combo &combo, const KeyBinding &binding)

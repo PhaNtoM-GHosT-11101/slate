@@ -11,6 +11,7 @@ HEADERS += \
     src/device.h \
     src/keymap.h \
     src/keymonitor.h \
+    src/mouseinjector.h \
     src/penmonitor.h \
     src/settings.h \
     src/theme.h \
@@ -24,6 +25,7 @@ SOURCES += \
     src/device.cpp \
     src/keymap.cpp \
     src/keymonitor.cpp \
+    src/mouseinjector.cpp \
     src/penmonitor.cpp \
     src/settings.cpp \
     src/theme.cpp \

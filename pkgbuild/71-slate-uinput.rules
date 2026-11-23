@@ -1,0 +1,4 @@
+# Allow the logged-in desktop user to create the virtual mouse Slate uses for
+# express-key mouse actions. This is the same uaccess mechanism used by Steam
+# Input and other user-session input tools.
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"

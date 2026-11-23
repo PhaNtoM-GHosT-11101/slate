@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Install and troubleshooting guide
+    url: https://github.com/PhaNtoM-GHosT-11101/slate/blob/main/docs/installation.md
+    about: Start here for installation problems and the per-distribution dependency lists.
+  - name: Platform support
+    url: https://github.com/PhaNtoM-GHosT-11101/slate/blob/main/docs/platforms.md
+    about: Hyprland, other Linux desktops, Windows, and macOS.
+  - name: Security report
+    url: https://github.com/PhaNtoM-GHosT-11101/slate/security/advisories/new
+    about: Report vulnerabilities privately. Do not include tokens or personal data.

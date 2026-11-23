@@ -22,8 +22,25 @@ const QSet<QString> &actions()
     static const QSet<QString> values{
         QStringLiteral("pass"),
         QStringLiteral("keys"),
+        QStringLiteral("mouse"),
         QStringLiteral("command"),
         QStringLiteral("nothing"),
+    };
+    return values;
+}
+
+const QStringList &mouseActionList()
+{
+    static const QStringList values{
+        QStringLiteral("left"),
+        QStringLiteral("right"),
+        QStringLiteral("middle"),
+        QStringLiteral("back"),
+        QStringLiteral("forward"),
+        QStringLiteral("wheelup"),
+        QStringLiteral("wheeldown"),
+        QStringLiteral("wheelleft"),
+        QStringLiteral("wheelright"),
     };
     return values;
 }
@@ -57,6 +74,40 @@ QString statusPath()
 bool isValidAction(const QString &action)
 {
     return actions().contains(action);
+}
+
+QStringList mouseActions()
+{
+    return mouseActionList();
+}
+
+bool isValidMouseAction(const QString &value)
+{
+    return mouseActionList().contains(value.trimmed().toLower());
+}
+
+QString mouseActionLabel(const QString &value)
+{
+    const QString normalized = value.trimmed().toLower();
+    if (normalized == QStringLiteral("left"))
+        return QStringLiteral("Left click");
+    if (normalized == QStringLiteral("right"))
+        return QStringLiteral("Right click");
+    if (normalized == QStringLiteral("middle"))
+        return QStringLiteral("Middle click");
+    if (normalized == QStringLiteral("back"))
+        return QStringLiteral("Back button");
+    if (normalized == QStringLiteral("forward"))
+        return QStringLiteral("Forward button");
+    if (normalized == QStringLiteral("wheelup"))
+        return QStringLiteral("Scroll up");
+    if (normalized == QStringLiteral("wheeldown"))
+        return QStringLiteral("Scroll down");
+    if (normalized == QStringLiteral("wheelleft"))
+        return QStringLiteral("Scroll left");
+    if (normalized == QStringLiteral("wheelright"))
+        return QStringLiteral("Scroll right");
+    return value;
 }
 
 QVector<KeyBinding> defaults()
@@ -126,6 +177,15 @@ QVector<KeyBinding> load(const QString &path, QString *error)
                     *error = QStringLiteral("Key %1 has an invalid shortcut (%2); using pass-through.")
                                  .arg(SlateKeys::displayName(binding.combo), why);
             }
+        } else if (binding.action == QStringLiteral("mouse")) {
+            binding.value = binding.value.trimmed().toLower();
+            if (!isValidMouseAction(binding.value)) {
+                binding.action = QStringLiteral("pass");
+                binding.value.clear();
+                if (error)
+                    *error = QStringLiteral("Key %1 has an invalid mouse action; using pass-through.")
+                                 .arg(SlateKeys::displayName(binding.combo));
+            }
         } else if (binding.action == QStringLiteral("command") && binding.value.trimmed().isEmpty()) {
             binding.action = QStringLiteral("pass");
             binding.value.clear();
@@ -166,6 +226,11 @@ bool save(const QString &path, const QVector<KeyBinding> &bindings, QString *err
             if (!SlateKeys::parseCombo(normalizedBinding.value, &output, &why))
                 return fail(QStringLiteral("%1: %2").arg(SlateKeys::displayName(combo), why));
             normalizedBinding.value = output.toString();
+        } else if (normalizedBinding.action == QStringLiteral("mouse")) {
+            normalizedBinding.value = normalizedBinding.value.trimmed().toLower();
+            if (!isValidMouseAction(normalizedBinding.value))
+                return fail(QStringLiteral("%1: choose a mouse button or scroll action.")
+                                .arg(SlateKeys::displayName(combo)));
         } else if (normalizedBinding.action == QStringLiteral("command")) {
             normalizedBinding.value = normalizedBinding.value.trimmed();
             if (normalizedBinding.value.isEmpty())

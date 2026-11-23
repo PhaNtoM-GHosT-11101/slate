@@ -7,6 +7,7 @@ Flickable {
     id: page
 
     property string activeCombo: ""
+    signal learnRequested(int index, string comboLabel)
 
     contentWidth: width
     contentHeight: column.implicitHeight + 56
@@ -20,6 +21,8 @@ Flickable {
             return qsTr("passed through")
         case "keys":
             return qsTr("sent a shortcut")
+        case "mouse":
+            return qsTr("sent a mouse action")
         case "command":
             return qsTr("ran a command")
         case "nothing":
@@ -54,7 +57,7 @@ Flickable {
 
         PageHeader {
             title: qsTr("Express keys")
-            subtitle: qsTr("The tablet's 12 shortcut keys send fixed keyboard combinations. Slate can take them over and run actions of your own.")
+            subtitle: qsTr("Turn the tablet's twelve shortcut keys into your own command centre.")
 
             AppButton {
                 text: qsTr("Reset bindings")
@@ -86,7 +89,7 @@ Flickable {
 
                 Text {
                     Layout.fillWidth: true
-                    text: qsTr("The background helper is not installed yet. Install Slate as a package to enable express-key remapping.")
+                    text: qsTr("The background helper is not installed. Install Slate with the package or ./install.sh to enable express-key remapping.")
                     color: "#d7b978"
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
@@ -102,21 +105,39 @@ Flickable {
                 Layout.fillWidth: true
                 spacing: 14
 
+                Rectangle {
+                    width: 38
+                    height: 38
+                    radius: 19
+                    color: backend.remapEnabled ? Qt.alpha("#5ed38b", 0.12) : "#1a1a20"
+                    border.width: 1
+                    border.color: backend.remapEnabled ? Qt.alpha("#5ed38b", 0.45) : "#303038"
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: backend.remapEnabled ? "#5ed38b" : "#71717b"
+                    }
+                }
+
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 2
 
                     Text {
-                        text: qsTr("Remap express keys")
+                        text: backend.remapEnabled ? qsTr("Helper running") : qsTr("Factory shortcuts")
                         color: "#e4e4e9"
                         font.pixelSize: 12
+                        font.weight: Font.Medium
                     }
 
                     Text {
                         Layout.fillWidth: true
                         text: backend.remapEnabled
-                            ? qsTr("The helper is running. Presses are handled by the bindings below.")
-                            : qsTr("When off, the keys send their factory shortcuts exactly as before.")
+                            ? qsTr("Presses are handled by the assignments below.")
+                            : qsTr("While off, the keys send their original shortcuts exactly as before.")
                         color: "#71717b"
                         font.pixelSize: 11
                         wrapMode: Text.WordWrap
@@ -188,9 +209,61 @@ Flickable {
             }
         }
 
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: learnRow.implicitHeight + 28
+            radius: 11
+            color: Qt.alpha(theme.accent, 0.055)
+            border.width: 1
+            border.color: Qt.alpha(theme.accent, 0.20)
+
+            RowLayout {
+                id: learnRow
+                anchors.fill: parent
+                anchors.margins: 14
+                spacing: 14
+
+                Rectangle {
+                    width: 34
+                    height: 34
+                    radius: 17
+                    color: Qt.alpha(theme.accent, 0.14)
+                    border.width: 1
+                    border.color: Qt.alpha(theme.accent, 0.35)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "⌨"
+                        color: theme.accent
+                        font.pixelSize: 15
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: qsTr("Learn by doing")
+                        color: "#e9e9ee"
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: qsTr("Hold the circular learn button on a key for 4 seconds, then press any key or mouse button. Shortcuts save immediately; commands still need Apply.")
+                        color: "#8c8c96"
+                        font.pixelSize: 11
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+        }
+
         Card {
-            title: qsTr("Bindings")
-            subtitle: qsTr("Pass replays the factory shortcut. Keys sends a new combination. Command runs a shell command. Off does nothing.")
+            title: qsTr("Key assignments")
+            subtitle: qsTr("Pass replays the factory shortcut. Keys sends a shortcut. Mouse clicks or scrolls. Command runs a shell command. Off swallows the press.")
 
             Column {
                 Layout.fillWidth: true
@@ -208,8 +281,19 @@ Flickable {
                         value: modelData.value
                         highlighted: page.activeCombo === modelData.combo
 
-                        onActionPicked: backend.updateKeyAction(modelData.index, newAction, modelData.value)
-                        onValueEdited: backend.updateKeyAction(modelData.index, modelData.action, newValue)
+                        onActionPicked: function(newAction) {
+                            backend.updateKeyAction(modelData.index, newAction, modelData.value)
+                            if (newAction !== "command")
+                                backend.saveKeys()
+                        }
+                        onValueEdited: function(newValue) {
+                            backend.updateKeyAction(modelData.index, modelData.action, newValue)
+                            if (modelData.action !== "command")
+                                backend.saveKeys()
+                        }
+                        onLearnRequested: function(index) {
+                            page.learnRequested(index, modelData.label)
+                        }
                     }
                 }
             }

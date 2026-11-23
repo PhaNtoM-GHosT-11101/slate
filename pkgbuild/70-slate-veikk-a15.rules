@@ -1,3 +1,8 @@
 # Allow the logged-in desktop user to read the VEIKK A15 pen and express-key
 # event nodes without joining the input group. The ACL is applied on login.
+#
+# Match both the USB IDs and the interface names: firmware revisions and
+# virtual test devices can expose the same interfaces under different parents.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="VEIKK.INC A15", TAG+="uaccess"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="VEIKK.INC A15 Keyboard", TAG+="uaccess"
 SUBSYSTEM=="input", KERNEL=="event*", ATTRS{idVendor}=="2feb", ATTRS{idProduct}=="0004", TAG+="uaccess"

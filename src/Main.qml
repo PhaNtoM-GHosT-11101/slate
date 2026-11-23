@@ -9,297 +9,469 @@ import "pages"
 ApplicationWindow {
     id: win
 
-    width: 1040
-    height: 800
-    minimumWidth: 860
-    minimumHeight: 620
+    width: 1200
+    height: 840
+    minimumWidth: 1000
+    minimumHeight: 640
     visible: true
-    title: qsTr("Slate")
-    color: "#0b0b0d"
+    title: qsTr("Slate — VEIKK A15")
+    color: "#0a0a0d"
 
     Material.theme: Material.Dark
     Material.accent: theme.accent
     Material.primary: theme.accent
-    Material.background: "#0b0b0d"
+    Material.background: "#0a0a0d"
     Material.foreground: "#e8e8ec"
 
-    property int currentTab: 0
+    property int currentTab: initialPage
     property bool helpVisible: false
-    property var tabs: [qsTr("Mapping"), qsTr("Pen"), qsTr("Express keys")]
 
-    Shortcut { sequence: "Ctrl+Q"; context: Qt.ApplicationShortcut; onActivated: Qt.quit() }
+    property var navItems: [
+        { label: qsTr("Mapping"), glyph: "▦", tab: 0 },
+        { label: qsTr("Pen"), glyph: "✎", tab: 1 },
+        { label: qsTr("Express keys"), glyph: "⌨", tab: 2 },
+        { label: qsTr("About"), glyph: "ⓘ", tab: 3 }
+    ]
+
+    Shortcut { sequence: "Ctrl+Q"; context: Qt.ApplicationShortcut; enabled: !capture.visible; onActivated: Qt.quit() }
     Shortcut {
         sequence: "Ctrl+S"
         context: Qt.ApplicationShortcut
+        enabled: !capture.visible
         onActivated: {
             win.contentItem.forceActiveFocus()
             backend.applyAll()
         }
     }
-    Shortcut { sequence: "Ctrl+1"; context: Qt.ApplicationShortcut; onActivated: win.currentTab = 0 }
-    Shortcut { sequence: "Ctrl+2"; context: Qt.ApplicationShortcut; onActivated: win.currentTab = 1 }
-    Shortcut { sequence: "Ctrl+3"; context: Qt.ApplicationShortcut; onActivated: win.currentTab = 2 }
+    Shortcut { sequence: "Ctrl+1"; context: Qt.ApplicationShortcut; enabled: !capture.visible; onActivated: win.currentTab = 0 }
+    Shortcut { sequence: "Ctrl+2"; context: Qt.ApplicationShortcut; enabled: !capture.visible; onActivated: win.currentTab = 1 }
+    Shortcut { sequence: "Ctrl+3"; context: Qt.ApplicationShortcut; enabled: !capture.visible; onActivated: win.currentTab = 2 }
+    Shortcut { sequence: "Ctrl+4"; context: Qt.ApplicationShortcut; enabled: !capture.visible; onActivated: win.currentTab = 3 }
     Shortcut {
         sequence: "?"
         context: Qt.ApplicationShortcut
+        // Do not steal "?" while the user is typing a command or shortcut.
+        enabled: !capture.visible
+            && (!win.activeFocusItem || win.activeFocusItem.text === undefined)
         onActivated: win.helpVisible = !win.helpVisible
     }
     Shortcut {
         sequence: "Escape"
         context: Qt.ApplicationShortcut
-        onActivated: win.helpVisible = false
+        onActivated: {
+            if (capture.visible)
+                capture.cancelled()
+            else
+                win.helpVisible = false
+        }
     }
 
     Rectangle {
         anchors.fill: parent
-        color: "#0b0b0d"
+        color: "#0a0a0d"
     }
 
-    Rectangle {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 260
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.alpha(theme.accent, 0.045) }
-            GradientStop { position: 1.0; color: "transparent" }
-        }
-    }
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
 
-    Rectangle {
-        id: header
+        Rectangle {
+            id: sidebar
 
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 74
-        color: "transparent"
+            Layout.fillHeight: true
+            Layout.preferredWidth: 236
+            color: "#0d0d10"
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 28
-            anchors.rightMargin: 28
-            spacing: 24
+            Rectangle {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 1
+                color: "#202027"
+            }
 
-            RowLayout {
-                spacing: 11
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 14
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 11
+
+                    Rectangle {
+                        width: 38
+                        height: 38
+                        radius: 11
+                        color: theme.accent
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "s"
+                            color: theme.accentForeground
+                            font.pixelSize: 23
+                            font.weight: Font.Bold
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 0
+
+                        Text {
+                            text: "slate"
+                            color: "#f2f2f5"
+                            font.pixelSize: 20
+                            font.weight: Font.DemiBold
+                        }
+
+                        Text {
+                            text: qsTr("VEIKK A15")
+                            color: "#70707a"
+                            font.pixelSize: 9
+                            font.letterSpacing: 1.4
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+                }
 
                 Rectangle {
-                    width: 34
-                    height: 34
-                    radius: 10
-                    color: theme.accent
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "s"
-                        color: theme.accentForeground
-                        font.pixelSize: 21
-                        font.weight: Font.Bold
-                    }
+                    Layout.fillWidth: true
+                    height: 1
+                    color: "#1d1d23"
                 }
 
                 ColumnLayout {
-                    spacing: 0
+                    Layout.fillWidth: true
+                    spacing: 3
 
-                    Text {
-                        text: "slate"
-                        color: "#f2f2f5"
-                        font.pixelSize: 19
-                        font.weight: Font.DemiBold
-                    }
+                    Repeater {
+                        model: win.navItems
 
-                    Text {
-                        text: qsTr("TABLET SETTINGS")
-                        color: "#6f6f79"
-                        font.pixelSize: 9
-                        font.letterSpacing: 1.5
+                        delegate: Rectangle {
+                            id: navItem
+
+                            required property var modelData
+                            property bool selected: win.currentTab === modelData.tab
+
+                            Layout.fillWidth: true
+                            implicitHeight: 42
+                            radius: 9
+                            color: selected ? Qt.alpha(theme.accent, 0.12)
+                                : navHover.hovered ? "#17171c" : "transparent"
+
+                            Behavior on color { ColorAnimation { duration: 100 } }
+
+                            Rectangle {
+                                visible: navItem.selected
+                                width: 3
+                                height: 20
+                                radius: 1.5
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: theme.accent
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 14
+                                anchors.rightMargin: 10
+                                spacing: 11
+
+                                Text {
+                                    text: navItem.modelData.glyph
+                                    color: navItem.selected ? theme.accent : "#7d7d88"
+                                    font.pixelSize: 15
+                                    Layout.preferredWidth: 20
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: navItem.modelData.label
+                                    color: navItem.selected ? "#f0f0f3"
+                                        : navHover.hovered ? "#d0d0d7" : "#a4a4ae"
+                                    font.pixelSize: 12
+                                    font.weight: navItem.selected ? Font.DemiBold : Font.Normal
+                                    elide: Text.ElideRight
+                                }
+
+                                Rectangle {
+                                    visible: navItem.modelData.tab === 2 && backend.remapEnabled
+                                    width: 6
+                                    height: 6
+                                    radius: 3
+                                    color: theme.accent
+                                }
+                            }
+
+                            HoverHandler { id: navHover }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: win.currentTab = navItem.modelData.tab
+                            }
+                        }
                     }
                 }
-            }
 
-            RowLayout {
-                spacing: 4
+                Item { Layout.fillHeight: true }
 
-                Repeater {
-                    model: win.tabs
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: statusColumn.implicitHeight + 24
+                    radius: 11
+                    color: "#141418"
+                    border.width: 1
+                    border.color: "#25252c"
 
-                    delegate: Rectangle {
-                        required property int index
-                        required property string modelData
+                    ColumnLayout {
+                        id: statusColumn
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 9
 
-                        width: tabLabel.implicitWidth + 28
-                        height: 34
-                        radius: 8
-                        color: win.currentTab === index
-                            ? Qt.alpha(theme.accent, 0.12)
-                            : (tabHover.hovered ? "#16161a" : "transparent")
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 7
 
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                            Rectangle {
+                                width: 7
+                                height: 7
+                                radius: 3.5
+                                color: backend.tabletConnected ? "#5ed38b" : "#e0a94a"
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: backend.tabletConnected ? qsTr("Tablet connected") : qsTr("Tablet not found")
+                                color: backend.tabletConnected ? "#c7e8d4" : "#d7b978"
+                                font.pixelSize: 10
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 1
+                            color: "#222228"
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 7
+
+                            Rectangle {
+                                width: 7
+                                height: 7
+                                radius: 3.5
+                                color: backend.remapEnabled ? theme.accent
+                                    : backend.serviceInstalled ? "#6b6b75" : "#e0a94a"
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: backend.remapEnabled ? qsTr("Remapping on")
+                                    : backend.serviceInstalled ? qsTr("Factory shortcuts") : qsTr("Helper not installed")
+                                color: "#8f8f99"
+                                font.pixelSize: 10
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 36
+                    radius: 9
+                    color: helpHover.hovered ? "#17171c" : "transparent"
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 9
 
                         Text {
-                            id: tabLabel
-                            anchors.centerIn: parent
-                            text: parent.modelData
-                            color: win.currentTab === parent.index ? theme.accent : "#9a9aa4"
-                            font.pixelSize: 12
-                            font.weight: win.currentTab === parent.index ? Font.DemiBold : Font.Medium
+                            text: "?"
+                            color: "#7d7d88"
+                            font.pixelSize: 13
+                            font.weight: Font.DemiBold
+                            Layout.preferredWidth: 18
+                            horizontalAlignment: Text.AlignHCenter
                         }
 
-                        HoverHandler { id: tabHover }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Keyboard shortcuts")
+                            color: "#8f8f99"
+                            font.pixelSize: 10
+                            elide: Text.ElideRight
+                        }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: win.currentTab = parent.index
+                        Text {
+                            text: "?"
+                            color: "#5c5c66"
+                            font.pixelSize: 10
                         }
                     }
+
+                    HoverHandler { id: helpHover }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: win.helpVisible = !win.helpVisible
+                    }
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: qsTr("Version %1 · MIT").arg(Qt.application.version)
+                    color: "#4e4e58"
+                    font.pixelSize: 9
+                }
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                color: "#0a0a0d"
+
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 280
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: Qt.alpha(theme.accent, 0.035) }
+                        GradientStop { position: 1.0; color: "transparent" }
+                    }
+                }
+
+                StackLayout {
+                    anchors.fill: parent
+                    currentIndex: win.currentTab
+
+                    MappingPage {}
+                    PenPage {}
+                    KeysPage {
+                        id: keysPage
+                        onLearnRequested: function(index, label) {
+                            capture.open(index)
+                            capture.comboLabel = label
+                        }
+                    }
+                    AboutPage {}
                 }
             }
 
-            Item { Layout.fillWidth: true }
-
             Rectangle {
-                implicitWidth: tabletPill.implicitWidth + 20
-                height: 28
-                radius: 14
-                color: "#111116"
-                border.width: 1
-                border.color: "#27272e"
+                id: footer
+
+                // The About page has nothing to apply, so give it the extra
+                // room instead of showing a dead action bar.
+                visible: win.currentTab !== 3
+                Layout.fillWidth: true
+                Layout.preferredHeight: 66
+                color: "#0d0d10"
+
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 1
+                    color: "#202027"
+                }
 
                 RowLayout {
-                    id: tabletPill
-                    anchors.centerIn: parent
-                    spacing: 7
+                    anchors.fill: parent
+                    anchors.leftMargin: 28
+                    anchors.rightMargin: 28
+                    spacing: 12
 
                     Rectangle {
-                        width: 6
-                        height: 6
-                        radius: 3
-                        color: backend.tabletConnected ? "#5ed38b" : "#e0a94a"
+                        width: 7
+                        height: 7
+                        radius: 3.5
+                        color: backend.messageError ? "#ff6b6b" : backend.dirty ? theme.accent : "#5c5c66"
                     }
 
                     Text {
-                        text: backend.tabletConnected ? backend.tabletName : qsTr("Tablet not found")
-                        color: backend.tabletConnected ? "#b8b8c1" : "#c8a45c"
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: 660
+                        text: backend.message
+                        color: backend.messageError ? "#ff9b9b" : "#8f8f99"
+                        font.pixelSize: 11
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    Text {
+                        visible: backend.dirty && win.width >= 1120
+                        text: qsTr("Unsaved changes")
+                        color: theme.accent
                         font.pixelSize: 10
+                    }
+
+                    Text {
+                        visible: win.width >= 1080
+                        text: qsTr("Ctrl+S")
+                        color: "#53535d"
+                        font.pixelSize: 10
+                    }
+
+                    AppButton {
+                        text: qsTr("Revert")
+                        Layout.minimumWidth: 84
+                        onClicked: backend.revert()
+                    }
+
+                    AppButton {
+                        text: qsTr("Apply changes")
+                        primary: true
+                        enabled: backend.dirty
+                        implicitWidth: 124
+                        Layout.minimumWidth: 124
+                        onClicked: {
+                            win.contentItem.forceActiveFocus()
+                            backend.applyAll()
+                        }
                     }
                 }
             }
-
-            Rectangle {
-                width: 30
-                height: 30
-                radius: 15
-                color: helpHover.hovered ? "#1c1c22" : "transparent"
-                border.width: 1
-                border.color: helpHover.hovered ? "#33333b" : "transparent"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "?"
-                    color: "#83838d"
-                    font.pixelSize: 13
-                    font.weight: Font.DemiBold
-                }
-
-                HoverHandler { id: helpHover }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: win.helpVisible = !win.helpVisible
-                }
-            }
         }
     }
 
-    StackLayout {
-        anchors.top: header.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: footer.top
-        currentIndex: win.currentTab
-
-        MappingPage {}
-        PenPage {}
-        KeysPage {}
+    CaptureOverlay {
+        id: capture
+        onCaptured: function(action, value) {
+            const index = capture.keyIndex
+            backend.updateKeyAction(index, action, value)
+            backend.saveKeys()
+            capture.close()
+        }
+        onCancelled: capture.close()
     }
 
-    Rectangle {
-        id: footer
-
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: 62
-        color: "#0f0f13"
-
-        Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 1
-            color: "#202026"
-        }
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 28
-            anchors.rightMargin: 28
-            spacing: 12
-
-            Rectangle {
-                width: 7
-                height: 7
-                radius: 3.5
-                color: backend.messageError ? "#ff6b6b" : backend.dirty ? theme.accent : "#5c5c66"
-            }
-
-            Text {
-                Layout.fillWidth: true
-                Layout.maximumWidth: 620
-                text: backend.message
-                color: backend.messageError ? "#ff9b9b" : "#8f8f99"
-                font.pixelSize: 11
-                maximumLineCount: 2
-                elide: Text.ElideRight
-                wrapMode: Text.WordWrap
-            }
-
-            Item { Layout.fillWidth: true }
-
-            Text {
-                visible: backend.dirty
-                text: qsTr("Unsaved changes")
-                color: theme.accent
-                font.pixelSize: 10
-            }
-
-            Text {
-                visible: win.width >= 940
-                text: qsTr("Ctrl+S")
-                color: "#53535d"
-                font.pixelSize: 10
-            }
-
-            AppButton {
-                text: qsTr("Revert")
-                Layout.minimumWidth: 84
-                onClicked: backend.revert()
-            }
-
-            AppButton {
-                text: qsTr("Apply changes")
-                primary: true
-                enabled: backend.dirty
-                implicitWidth: 124
-                Layout.minimumWidth: 124
-                onClicked: {
-                    win.contentItem.forceActiveFocus()
-                    backend.applyAll()
-                }
-            }
+    Component.onCompleted: {
+        if (initialCapture) {
+            win.currentTab = 2
+            capture.open(0)
+            const rows = backend.keyBindings
+            if (rows.length > 0)
+                capture.comboLabel = rows[0].label
         }
     }
 
@@ -321,11 +493,11 @@ ApplicationWindow {
         }
 
         Rectangle {
-            width: Math.min(500, parent.width - 48)
+            width: Math.min(520, parent.width - 48)
             implicitHeight: helpColumn.implicitHeight + 48
             anchors.centerIn: parent
-            radius: 14
-            color: "#151518"
+            radius: 16
+            color: "#151519"
             border.width: 1
             border.color: "#2b2b32"
 
@@ -367,6 +539,15 @@ ApplicationWindow {
                     wrapMode: Text.WordWrap
                 }
 
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTr("To remap a key, hold its circular learn button for 4 seconds, then press a key or mouse button. Esc cancels capture.")
+                    color: theme.accent
+                    font.pixelSize: 11
+                    lineHeight: 1.35
+                    wrapMode: Text.WordWrap
+                }
+
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
@@ -379,8 +560,8 @@ ApplicationWindow {
                     columnSpacing: 24
                     rowSpacing: 8
 
-                    Text { text: qsTr("Ctrl+1 · Ctrl+2 · Ctrl+3"); color: "#d0d0d7"; font.pixelSize: 11 }
-                    Text { text: qsTr("Switch tabs"); color: "#777781"; font.pixelSize: 11 }
+                    Text { text: qsTr("Ctrl+1 … Ctrl+4"); color: "#d0d0d7"; font.pixelSize: 11 }
+                    Text { text: qsTr("Switch pages"); color: "#777781"; font.pixelSize: 11 }
                     Text { text: qsTr("Ctrl+S"); color: "#d0d0d7"; font.pixelSize: 11 }
                     Text { text: qsTr("Apply changes"); color: "#777781"; font.pixelSize: 11 }
                     Text { text: qsTr("Ctrl+Q"); color: "#d0d0d7"; font.pixelSize: 11 }

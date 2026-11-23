@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest an improvement or a new platform, action, or workflow.
+title: "[feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      placeholder: I want to assign a mouse wheel action without leaving the keyboard.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Slate to do?
+      placeholder: Add a scroll action option to the hold-to-learn capture sheet.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you have considered
+      placeholder: Using OpenTabletDriver, a compositor binding, or a shell command.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Express keys
+        - Hold to learn / capture
+        - Screen mapping
+        - Pen pressure / live test
+        - Installation / packaging
+        - Documentation
+        - Windows / macOS
+        - Other
+    validations:
+      required: true

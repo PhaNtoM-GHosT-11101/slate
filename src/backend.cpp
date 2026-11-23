@@ -373,6 +373,36 @@ void Backend::rebuildKeyRows()
     emit keyBindingsChanged();
 }
 
+bool Backend::saveKeys()
+{
+    if (!m_keysDirty) {
+        setMessage(tr("Key bindings are already saved."), false);
+        return true;
+    }
+    QString error;
+    if (!saveBindings(&error)) {
+        setMessage(error, true);
+        return false;
+    }
+    setMessage(tr("Key bindings saved."), false);
+    return true;
+}
+
+QString Backend::comboFromKey(int key, int modifiers, const QString &text) const
+{
+    return SlateKeys::comboFromQtKey(key, modifiers, text);
+}
+
+QString Backend::comboLabel(const QString &combo) const
+{
+    return SlateKeys::displayName(combo);
+}
+
+QString Backend::mouseLabel(const QString &value) const
+{
+    return SlateBindings::mouseActionLabel(value);
+}
+
 bool Backend::applyAll()
 {
     if (!m_mappingDirty && !m_keysDirty) {
@@ -496,11 +526,36 @@ void Backend::updateKeyAction(int index, const QString &action, const QString &v
     if (!SlateBindings::isValidAction(action))
         return;
 
-    QString newValue = value;
-    if (action != QStringLiteral("keys") && action != QStringLiteral("command"))
-        newValue.clear();
-
     KeyBinding &binding = m_bindings[index];
+
+    QString newValue = value;
+    if (action == QStringLiteral("keys")) {
+        SlateKeys::Combo parsed;
+        if (SlateKeys::parseCombo(newValue, &parsed)) {
+            newValue = parsed.toString();
+        } else if (binding.action == QStringLiteral("keys") && !binding.value.isEmpty()) {
+            // Keep the previous valid shortcut when an edit cannot be parsed.
+            newValue = binding.value;
+        } else {
+            // Switching to Keys starts at the factory shortcut. The user can
+            // replace it with the hold gesture or by typing.
+            newValue = binding.combo;
+        }
+    } else if (action == QStringLiteral("mouse")) {
+        newValue = newValue.trimmed().toLower();
+        if (!SlateBindings::isValidMouseAction(newValue)) {
+            newValue = binding.action == QStringLiteral("mouse")
+                && SlateBindings::isValidMouseAction(binding.value)
+                ? binding.value : QStringLiteral("left");
+        }
+    } else if (action == QStringLiteral("command")) {
+        // Do not carry a shortcut or mouse action into the shell command
+        // field when the user switches the row to Command.
+        if (binding.action != QStringLiteral("command"))
+            newValue.clear();
+    } else {
+        newValue.clear();
+    }
     if (binding.action == action && binding.value == newValue)
         return;
 
@@ -562,9 +617,14 @@ void Backend::refreshService()
     const QString configBase = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
     const QString userUnit = (configBase.isEmpty() ? QDir::homePath() + QStringLiteral("/.config") : configBase)
         + QStringLiteral("/systemd/user/slate.service");
+    const QString dataBase = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    const QString localDataUnit = (dataBase.isEmpty() ? QDir::homePath() + QStringLiteral("/.local/share") : dataBase)
+        + QStringLiteral("/systemd/user/slate.service");
     const bool installed = QFileInfo::exists(QStringLiteral("/usr/lib/systemd/user/slate.service"))
+        || QFileInfo::exists(QStringLiteral("/usr/local/lib/systemd/user/slate.service"))
         || QFileInfo::exists(QStringLiteral("/etc/systemd/user/slate.service"))
-        || QFileInfo::exists(userUnit);
+        || QFileInfo::exists(userUnit)
+        || QFileInfo::exists(localDataUnit);
 
     bool active = false;
     QString state;

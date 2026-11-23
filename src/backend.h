@@ -113,6 +113,10 @@ public:
     QString hyprlandConfigPath() const;
 
     Q_INVOKABLE bool applyAll();
+    Q_INVOKABLE bool saveKeys();
+    Q_INVOKABLE QString comboFromKey(int key, int modifiers, const QString &text) const;
+    Q_INVOKABLE QString comboLabel(const QString &combo) const;
+    Q_INVOKABLE QString mouseLabel(const QString &value) const;
     Q_INVOKABLE void revert();
     Q_INVOKABLE void resetMapping();
     Q_INVOKABLE void resetKeys();

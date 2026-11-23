@@ -7,6 +7,7 @@
 
 #include "bindings.h"
 #include "keymap.h"
+#include "mouseinjector.h"
 
 class QSocketNotifier;
 
@@ -29,9 +30,13 @@ private:
     void readEvents();
     void reloadBindings();
     void trigger(const SlateKeys::Combo &combo);
+    void replayCombo(const SlateKeys::Combo &combo);
     void runWtype(const SlateKeys::Combo &combo);
+    void runXdotool(const SlateKeys::Combo &combo);
     void writeStatus(const SlateKeys::Combo &combo, const KeyBinding &binding);
     void ensureWaylandEnvironment();
+    bool usesMouse() const;
+    bool isWaylandSession() const;
 
     int m_fd = -1;
     QString m_devicePath;
@@ -39,6 +44,7 @@ private:
     QTimer m_retry;
     QTimer m_quitPoll;
     SlateKeys::ComboTracker m_tracker;
+    MouseInjector m_mouse;
     QHash<QString, KeyBinding> m_bindings;
     QFileSystemWatcher m_watcher;
     QTimer m_reloadDebounce;

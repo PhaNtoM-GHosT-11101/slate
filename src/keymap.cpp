@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <linux/input-event-codes.h>
+#include <QtCore/qnamespace.h>
 
 namespace SlateKeys {
 namespace {
@@ -369,6 +370,43 @@ QStringList wtypeArgs(const Combo &combo)
     return args;
 }
 
+namespace {
+
+QString xdotoolKey(const QString &key)
+{
+    if (key.size() == 1)
+        return key;
+    if (key.startsWith('f') && key.mid(1).toInt() > 0)
+        return key.toUpper();
+    static const QHash<QString, QString> names{
+        {QStringLiteral("escape"), QStringLiteral("Escape")},
+        {QStringLiteral("tab"), QStringLiteral("Tab")},
+        {QStringLiteral("enter"), QStringLiteral("Return")},
+        {QStringLiteral("space"), QStringLiteral("space")},
+        {QStringLiteral("backspace"), QStringLiteral("BackSpace")},
+        {QStringLiteral("delete"), QStringLiteral("Delete")},
+        {QStringLiteral("insert"), QStringLiteral("Insert")},
+        {QStringLiteral("home"), QStringLiteral("Home")},
+        {QStringLiteral("end"), QStringLiteral("End")},
+        {QStringLiteral("pageup"), QStringLiteral("Page_Up")},
+        {QStringLiteral("pagedown"), QStringLiteral("Page_Down")},
+        {QStringLiteral("left"), QStringLiteral("Left")},
+        {QStringLiteral("right"), QStringLiteral("Right")},
+        {QStringLiteral("up"), QStringLiteral("Up")},
+        {QStringLiteral("down"), QStringLiteral("Down")},
+    };
+    return names.value(key, key);
+}
+
+} // namespace
+
+QStringList xdotoolArgs(const Combo &combo)
+{
+    QStringList parts = combo.modifiers;
+    parts.append(xdotoolKey(combo.key));
+    return {QStringLiteral("key"), QStringLiteral("--clearmodifiers"), parts.join('+')};
+}
+
 bool parseCombo(const QString &text, Combo *combo, QString *error)
 {
     auto fail = [error](const QString &message) {
@@ -404,6 +442,165 @@ bool parseCombo(const QString &text, Combo *combo, QString *error)
         return fail(QStringLiteral("Add a key to the combination."));
     *combo = result;
     return true;
+}
+
+namespace {
+
+QString qtKeyToken(int key)
+{
+    switch (key) {
+    case Qt::Key_Escape:
+        return QStringLiteral("escape");
+    case Qt::Key_Tab:
+    case Qt::Key_Backtab:
+        return QStringLiteral("tab");
+    case Qt::Key_Backspace:
+        return QStringLiteral("backspace");
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+        return QStringLiteral("enter");
+    case Qt::Key_Insert:
+        return QStringLiteral("insert");
+    case Qt::Key_Delete:
+        return QStringLiteral("delete");
+    case Qt::Key_Home:
+        return QStringLiteral("home");
+    case Qt::Key_End:
+        return QStringLiteral("end");
+    case Qt::Key_PageUp:
+        return QStringLiteral("pageup");
+    case Qt::Key_PageDown:
+        return QStringLiteral("pagedown");
+    case Qt::Key_Left:
+        return QStringLiteral("left");
+    case Qt::Key_Right:
+        return QStringLiteral("right");
+    case Qt::Key_Up:
+        return QStringLiteral("up");
+    case Qt::Key_Down:
+        return QStringLiteral("down");
+    case Qt::Key_Space:
+        return QStringLiteral("space");
+    case Qt::Key_Minus:
+        return QStringLiteral("minus");
+    case Qt::Key_Equal:
+        return QStringLiteral("equal");
+    case Qt::Key_BracketLeft:
+        return QStringLiteral("bracketleft");
+    case Qt::Key_BracketRight:
+        return QStringLiteral("bracketright");
+    case Qt::Key_Backslash:
+        return QStringLiteral("backslash");
+    case Qt::Key_Semicolon:
+        return QStringLiteral("semicolon");
+    case Qt::Key_Apostrophe:
+        return QStringLiteral("apostrophe");
+    case Qt::Key_QuoteLeft:
+        return QStringLiteral("grave");
+    case Qt::Key_Comma:
+        return QStringLiteral("comma");
+    case Qt::Key_Period:
+        return QStringLiteral("period");
+    case Qt::Key_Slash:
+        return QStringLiteral("slash");
+    // Shifted punctuation reports the symbol as the key on several layouts.
+    // The modifier mask still contains Shift, so map back to the base key and
+    // let the normal modifier handling build e.g. "shift+slash".
+    case Qt::Key_Exclam:
+        return QStringLiteral("1");
+    case Qt::Key_At:
+        return QStringLiteral("2");
+    case Qt::Key_NumberSign:
+        return QStringLiteral("3");
+    case Qt::Key_Dollar:
+        return QStringLiteral("4");
+    case Qt::Key_Percent:
+        return QStringLiteral("5");
+    case Qt::Key_AsciiCircum:
+        return QStringLiteral("6");
+    case Qt::Key_Ampersand:
+        return QStringLiteral("7");
+    case Qt::Key_Asterisk:
+        return QStringLiteral("8");
+    case Qt::Key_ParenLeft:
+        return QStringLiteral("9");
+    case Qt::Key_ParenRight:
+        return QStringLiteral("0");
+    case Qt::Key_Underscore:
+        return QStringLiteral("minus");
+    case Qt::Key_Plus:
+        return QStringLiteral("equal");
+    case Qt::Key_BraceLeft:
+        return QStringLiteral("bracketleft");
+    case Qt::Key_BraceRight:
+        return QStringLiteral("bracketright");
+    case Qt::Key_Bar:
+        return QStringLiteral("backslash");
+    case Qt::Key_Colon:
+        return QStringLiteral("semicolon");
+    case Qt::Key_QuoteDbl:
+        return QStringLiteral("apostrophe");
+    case Qt::Key_AsciiTilde:
+        return QStringLiteral("grave");
+    case Qt::Key_Less:
+        return QStringLiteral("comma");
+    case Qt::Key_Greater:
+        return QStringLiteral("period");
+    case Qt::Key_Question:
+        return QStringLiteral("slash");
+    default:
+        break;
+    }
+
+    if (key >= Qt::Key_A && key <= Qt::Key_Z)
+        return QString(QChar('a' + (key - Qt::Key_A)));
+    if (key >= Qt::Key_0 && key <= Qt::Key_9)
+        return QString(QChar('0' + (key - Qt::Key_0)));
+    if (key >= Qt::Key_F1 && key <= Qt::Key_F24)
+        return QStringLiteral("f%1").arg(key - Qt::Key_F1 + 1);
+    return {};
+}
+
+} // namespace
+
+QString comboFromQtKey(int key, int modifiers, const QString &text)
+{
+    // Modifier-only presses are not a complete shortcut. The capture overlay
+    // keeps waiting and shows the held modifiers instead.
+    switch (key) {
+    case Qt::Key_Control:
+    case Qt::Key_Shift:
+    case Qt::Key_Alt:
+    case Qt::Key_AltGr:
+    case Qt::Key_Meta:
+    case Qt::Key_CapsLock:
+    case Qt::Key_NumLock:
+    case Qt::Key_ScrollLock:
+        return {};
+    default:
+        break;
+    }
+
+    QString token = qtKeyToken(key);
+    if (token.isEmpty()) {
+        const QString cleaned = text.trimmed().toLower();
+        if (cleaned.size() == 1 && cleaned.at(0).isPrint() && !cleaned.at(0).isSpace())
+            token = normalizeKeyToken(cleaned);
+    }
+    if (token.isEmpty())
+        return {};
+
+    Combo combo;
+    combo.key = token;
+    if (modifiers & Qt::ControlModifier)
+        addModifier(&combo, QStringLiteral("ctrl"));
+    if (modifiers & Qt::ShiftModifier)
+        addModifier(&combo, QStringLiteral("shift"));
+    if (modifiers & Qt::AltModifier)
+        addModifier(&combo, QStringLiteral("alt"));
+    if (modifiers & Qt::MetaModifier)
+        addModifier(&combo, QStringLiteral("super"));
+    return combo.toString();
 }
 
 QVector<Combo> defaultCombos()

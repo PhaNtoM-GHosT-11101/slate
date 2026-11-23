@@ -4,10 +4,14 @@
         <file alias="pages/MappingPage.qml">pages/MappingPage.qml</file>
         <file alias="pages/PenPage.qml">pages/PenPage.qml</file>
         <file alias="pages/KeysPage.qml">pages/KeysPage.qml</file>
+        <file alias="pages/AboutPage.qml">pages/AboutPage.qml</file>
         <file alias="components/AppButton.qml">components/AppButton.qml</file>
+        <file alias="components/CaptureOverlay.qml">components/CaptureOverlay.qml</file>
         <file alias="components/Card.qml">components/Card.qml</file>
+        <file alias="components/HoldButton.qml">components/HoldButton.qml</file>
         <file alias="components/Choice.qml">components/Choice.qml</file>
         <file alias="components/KeyRow.qml">components/KeyRow.qml</file>
+        <file alias="components/MouseMenuItem.qml">components/MouseMenuItem.qml</file>
         <file alias="components/NumberField.qml">components/NumberField.qml</file>
         <file alias="components/PageHeader.qml">components/PageHeader.qml</file>
         <file alias="components/PenPad.qml">components/PenPad.qml</file>

@@ -6,6 +6,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
+Environment=QT_ASSUME_STDERR_HAS_CONSOLE=1
 ExecStart=/usr/bin/slate --daemon
 Restart=on-failure
 RestartSec=2

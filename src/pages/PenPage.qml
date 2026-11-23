@@ -195,7 +195,9 @@ Flickable {
 
             PenPad {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 320
+                // Keep the live readouts above the footer at the default
+                // window size; the page still scrolls on shorter windows.
+                Layout.preferredHeight: 286
             }
 
             RowLayout {

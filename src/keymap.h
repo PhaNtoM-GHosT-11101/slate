@@ -34,12 +34,20 @@ QString normalizeModifierToken(const QString &token);
 QString displayName(const Combo &combo);
 QString displayName(const QString &combo);
 
-// Arguments for wtype that press and release the combo.
+// Arguments for wtype (Wayland) and xdotool (X11) that press and release the
+// combo.
 QStringList wtypeArgs(const Combo &combo);
+QStringList xdotoolArgs(const Combo &combo);
 
 // Parse "ctrl+shift+t" and friends. On failure leaves combo untouched and
 // fills error with a sentence suitable for the UI.
 bool parseCombo(const QString &text, Combo *combo, QString *error = nullptr);
+
+// Convert a Qt key press (as delivered to the GUI) into the same canonical
+// combo syntax used by the daemon. Modifier-only presses return an empty
+// string so the capture UI can keep waiting. Qt::KeyboardModifiers is passed
+// as an int to keep this header independent of Qt's GUI module.
+QString comboFromQtKey(int key, int modifiers, const QString &text);
 
 // The 12 factory shortcuts emitted by the VEIKK A15 express keys, in the order
 // they were captured from the device.

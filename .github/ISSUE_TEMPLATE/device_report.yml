@@ -1,0 +1,51 @@
+name: Device report
+description: Report a VEIKK tablet that Slate does not detect or map correctly.
+title: "[device] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Device reports help broaden support beyond the A15. Do not include
+        serial numbers, tokens, or personal paths if you prefer not to.
+  - type: input
+    id: model
+    attributes:
+      label: Tablet model
+      placeholder: VEIKK A15 V2
+    validations:
+      required: true
+  - type: input
+    id: usb
+    attributes:
+      label: USB ID
+      description: Output of `lsusb | grep -i veikk`.
+      placeholder: "2feb:0004"
+    validations:
+      required: true
+  - type: textarea
+    id: names
+    attributes:
+      label: Event node names
+      description: |
+        Paste the output of:
+        `for f in /sys/class/input/event*/device/name; do echo "$f: $(cat "$f")"; done`
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: dimensions
+    attributes:
+      label: Active area
+      description: Physical active area in millimetres, if known.
+      placeholder: "254 × 152.4 mm"
+  - type: input
+    id: keys
+    attributes:
+      label: Express keys
+      description: Number of express keys and their factory shortcuts, if known.
+      placeholder: "12 keys; Ctrl+C, Ctrl+V, ..."
+  - type: textarea
+    id: notes
+    attributes:
+      label: What works and what does not?
+      description: Mapping, pen input, pressure, express keys, mouse actions.

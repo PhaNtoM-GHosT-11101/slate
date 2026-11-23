@@ -1,0 +1,88 @@
+name: Bug report
+description: Something in Slate is broken or behaves unexpectedly.
+title: "[bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please remove tokens, passwords, and other
+        secrets from logs before pasting them.
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      placeholder: The express key should send Ctrl+Shift+T.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened?
+      placeholder: The key did nothing, and the helper journal said...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Express keys
+        2. Hold the 4s button on key 1
+        3. Press Ctrl+Shift+T
+        4. ...
+    validations:
+      required: true
+  - type: input
+    id: slate-version
+    attributes:
+      label: Slate version
+      description: The About page or `slate --version`.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: input
+    id: distribution
+    attributes:
+      label: Distribution and desktop
+      placeholder: Omarchy 4.5 / Hyprland 0.56.2 / Wayland
+    validations:
+      required: true
+  - type: input
+    id: qt
+    attributes:
+      label: Qt version
+      description: Output of `qmake6 -query QT_VERSION`.
+      placeholder: "6.10.0"
+  - type: dropdown
+    id: section
+    attributes:
+      label: Where does it happen?
+      options:
+        - Screen mapping
+        - Pen pressure
+        - Live pen test
+        - Express keys / hold to learn
+        - Mouse action
+        - Background helper / service
+        - Installation or packaging
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        `journalctl --user -u slate.service -n 80`
+        `hyprctl configerrors`
+        Relevant terminal output.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I removed secrets from logs and screenshots.
+          required: true
+        - label: I searched existing issues before opening this one.
+          required: true

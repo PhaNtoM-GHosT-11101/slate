@@ -1,11 +1,12 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
 #include <QVector>
 
 struct KeyBinding {
     QString combo;
-    QString action = QStringLiteral("pass"); // pass, keys, command, nothing
+    QString action = QStringLiteral("pass"); // pass, keys, mouse, command, nothing
     QString value;
 
     bool operator==(const KeyBinding &other) const
@@ -27,5 +28,11 @@ QVector<KeyBinding> load(const QString &path, QString *error = nullptr);
 bool save(const QString &path, const QVector<KeyBinding> &bindings, QString *error = nullptr);
 
 bool isValidAction(const QString &action);
+
+// Mouse actions understood by the helper: left, right, middle, back, forward,
+// wheelup, wheeldown, wheelleft, wheelright.
+QStringList mouseActions();
+bool isValidMouseAction(const QString &value);
+QString mouseActionLabel(const QString &value);
 
 } // namespace SlateBindings

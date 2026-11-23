@@ -24,6 +24,8 @@ private slots:
     void rejectsBadCombos();
     void formatsDisplayNames();
     void buildsWtypeArguments();
+    void buildsXdotoolArguments();
+    void capturesQtKeys();
     void mapsEvdevCodes();
     void tracksHeldCombos();
     void ignoresAutorepeatAndModifiers();
@@ -40,7 +42,9 @@ private slots:
     // bindings
     void defaultsArePassThrough();
     void bindingsRoundTrip();
+    void bindingsRoundTripMouse();
     void bindingsRejectInvalidShortcut();
+    void bindingsRejectInvalidMouseAction();
     void bindingsRejectDuplicates();
     void bindingsFallBackForBadFile();
 
@@ -117,6 +121,31 @@ void SlateTests::buildsWtypeArguments()
     Combo function;
     QVERIFY(parseCombo("f5", &function));
     QCOMPARE(wtypeArgs(function), QStringList({"-k", "F5"}));
+}
+
+void SlateTests::buildsXdotoolArguments()
+{
+    Combo combo;
+    QVERIFY(parseCombo("ctrl+shift+t", &combo));
+    QCOMPARE(xdotoolArgs(combo), QStringList({"key", "--clearmodifiers", "ctrl+shift+t"}));
+
+    Combo function;
+    QVERIFY(parseCombo("ctrl+pageup", &function));
+    QCOMPARE(xdotoolArgs(function), QStringList({"key", "--clearmodifiers", "ctrl+Page_Up"}));
+}
+
+void SlateTests::capturesQtKeys()
+{
+    QCOMPARE(comboFromQtKey(Qt::Key_C, Qt::ControlModifier, "c"), QStringLiteral("ctrl+c"));
+    QCOMPARE(comboFromQtKey(Qt::Key_1, Qt::ShiftModifier, "!"), QStringLiteral("shift+1"));
+    QCOMPARE(comboFromQtKey(Qt::Key_F5, Qt::NoModifier, {}), QStringLiteral("f5"));
+    QCOMPARE(comboFromQtKey(Qt::Key_PageUp, Qt::AltModifier, {}), QStringLiteral("alt+pageup"));
+    QCOMPARE(comboFromQtKey(Qt::Key_Slash, Qt::MetaModifier, "/"), QStringLiteral("super+slash"));
+    QCOMPARE(comboFromQtKey(Qt::Key_Question, Qt::ShiftModifier, "?"), QStringLiteral("shift+slash"));
+    QCOMPARE(comboFromQtKey(Qt::Key_Dollar, Qt::ShiftModifier, "$"), QStringLiteral("shift+4"));
+    QCOMPARE(comboFromQtKey(Qt::Key_Underscore, Qt::ShiftModifier, "_"), QStringLiteral("shift+minus"));
+    QCOMPARE(comboFromQtKey(Qt::Key_Control, Qt::ControlModifier, {}), QString());
+    QCOMPARE(comboFromQtKey(Qt::Key_unknown, Qt::NoModifier, {}), QString());
 }
 
 void SlateTests::mapsEvdevCodes()
@@ -299,6 +328,41 @@ void SlateTests::bindingsRoundTrip()
     QCOMPARE(loaded[1].value, QStringLiteral("notify-send hello"));
     QCOMPARE(loaded[2].action, QStringLiteral("nothing"));
     QVERIFY(loaded[2].value.isEmpty());
+}
+
+void SlateTests::bindingsRoundTripMouse()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("keys.json"));
+
+    QVector<KeyBinding> bindings = SlateBindings::defaults();
+    bindings[0].action = QStringLiteral("mouse");
+    bindings[0].value = QStringLiteral("left");
+    bindings[1].action = QStringLiteral("mouse");
+    bindings[1].value = QStringLiteral("wheelup");
+
+    QString error;
+    QVERIFY2(SlateBindings::save(path, bindings, &error), qPrintable(error));
+
+    const QVector<KeyBinding> loaded = SlateBindings::load(path, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QCOMPARE(loaded[0].action, QStringLiteral("mouse"));
+    QCOMPARE(loaded[0].value, QStringLiteral("left"));
+    QCOMPARE(loaded[1].value, QStringLiteral("wheelup"));
+    QCOMPARE(SlateBindings::mouseActionLabel(loaded[1].value), QStringLiteral("Scroll up"));
+}
+
+void SlateTests::bindingsRejectInvalidMouseAction()
+{
+    QTemporaryDir dir;
+    QVector<KeyBinding> bindings = SlateBindings::defaults();
+    bindings[0].action = QStringLiteral("mouse");
+    bindings[0].value = QStringLiteral("doubleclick");
+
+    QString error;
+    QVERIFY(!SlateBindings::save(dir.filePath(QStringLiteral("keys.json")), bindings, &error));
+    QVERIFY(error.contains(QStringLiteral("mouse button")));
 }
 
 void SlateTests::bindingsRejectInvalidShortcut()
