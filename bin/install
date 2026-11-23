@@ -1,22 +1,6 @@
 #!/bin/sh
+# Build and install the Arch package. See bin/package for build-only use.
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-"$ROOT/bin/build"
-
-VERSION="$(sed -n 's/^pkgver=//p' "$ROOT/pkgbuild/PKGBUILD")"
-SOURCE="$ROOT/pkgbuild/slate-$VERSION.tar.gz"
-
-# Package exactly the working tree, with the build output and VCS metadata
-# left out. The tarball has a top-level slate-<version> directory, which is
-# what PKGBUILD expects in $srcdir.
-rm -f "$SOURCE"
-tar -C "$ROOT" \
-    --exclude='./build' \
-    --exclude='./.git' \
-    --exclude='./pkgbuild' \
-    --transform "s|^\.|slate-$VERSION|" \
-    -czf "$SOURCE" .
-
-cd "$ROOT/pkgbuild"
-exec makepkg -fsi "$@"
+exec "$ROOT/bin/package" -i "$@"

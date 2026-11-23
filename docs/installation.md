@@ -56,14 +56,15 @@ remapping in the app. The existing system udev rule for the tablet and
 ```sh
 git clone https://github.com/PhaNtoM-GHosT-11101/slate.git
 cd slate
-./bin/install          # builds a source tarball and runs makepkg -fsi
+./bin/install          # builds the source tarball and runs makepkg -i
 ```
 
-Or, with `pkgbuild/` copied into a package repository:
+To build the package without installing it, run `./bin/package`. Both commands
+create the source tarball from the working tree. The result is
+`pkgbuild/slate-0.2.0-1-x86_64.pkg.tar.zst`; install it with:
 
 ```sh
-cd pkgbuild
-makepkg -fsi
+sudo pacman -U pkgbuild/slate-0.2.0-1-x86_64.pkg.tar.zst
 ```
 
 The package installs under `/usr` and includes the systemd user unit, udev
@@ -86,6 +87,7 @@ Network modules, `qmake6`, a C++17 compiler, `make`, and `wtype` or `xdotool`.
 
 ```sh
 slate                       # or launch Slate from the app launcher
+slate --version
 systemctl --user status slate.service
 ```
 
@@ -120,8 +122,9 @@ For a per-user install:
 
 Add `--purge` to remove `~/.config/slate` and `~/.local/state/slate` as well.
 Add `--no-udev` when the system-wide rules should stay installed, for example
-when another copy of Slate or a distribution package still uses them. The
-managed Hyprland block is never removed automatically.
+when another copy of Slate or a distribution package still uses them. With
+`--no-udev`, a per-user uninstall does not need root. The managed Hyprland
+block is never removed automatically.
 
 ## Troubleshooting installs
 

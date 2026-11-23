@@ -11,6 +11,8 @@
 #include <QTimer>
 #include <QUrl>
 
+#include <cstdio>
+
 #include "backend.h"
 #include "daemon.h"
 #include "penmonitor.h"
@@ -20,6 +22,8 @@
 int main(int argc, char *argv[])
 {
     bool daemonMode = false;
+    bool showVersion = false;
+    bool showHelp = false;
     int initialPage = 0;
     bool initialCapture = false;
     QString screenshotPath;
@@ -33,7 +37,33 @@ int main(int argc, char *argv[])
             initialCapture = true;
         } else if (argument == QStringLiteral("--screenshot") && i + 1 < argc) {
             screenshotPath = QString::fromLocal8Bit(argv[++i]);
+        } else if (argument == QStringLiteral("--version") || argument == QStringLiteral("-v")) {
+            showVersion = true;
+        } else if (argument == QStringLiteral("--help") || argument == QStringLiteral("-h")) {
+            showHelp = true;
         }
+    }
+
+    if (showVersion || showHelp) {
+        QCoreApplication app(argc, argv);
+        QCoreApplication::setApplicationName(QStringLiteral("slate"));
+        QCoreApplication::setApplicationVersion(QStringLiteral("0.2.0"));
+
+        if (showVersion) {
+            std::printf("slate %s\n", qPrintable(QCoreApplication::applicationVersion()));
+        } else {
+            std::printf(
+                "Usage: slate [options]\n"
+                "\n"
+                "Options:\n"
+                "  --page N          open page 0-3 (mapping, pen, express keys, about)\n"
+                "  --capture         open the hold-to-learn capture sheet\n"
+                "  --screenshot PATH render one page to PATH and exit\n"
+                "  --daemon          run the express-key helper in the foreground\n"
+                "  -v, --version     print the version and exit\n"
+                "  -h, --help        show this help\n");
+        }
+        return 0;
     }
 
     if (daemonMode) {

@@ -110,9 +110,10 @@ rm -rf "$tmp"
 
 ## Packaging
 
-The Arch package lives in `pkgbuild/`. `./bin/install` builds a working-tree
-source tarball and runs `makepkg -fsi`. If you add an installed file, update
-both `pkgbuild/PKGBUILD` and `install.sh`, then run the dry run:
+The Arch package lives in `pkgbuild/`. `./bin/package` builds a working-tree
+source tarball and runs `makepkg -f`; `./bin/install` also installs the result.
+If you add an installed file, update both `pkgbuild/PKGBUILD` and `install.sh`,
+then run the dry run:
 
 ```sh
 ./install.sh --dry-run --no-deps

@@ -1,0 +1,26 @@
+#!/bin/sh
+# Build an Arch package without installing it.
+#
+#   ./bin/package                 build the package
+#   ./bin/package -i              build and install it
+#
+# Extra arguments are passed to makepkg. The source tarball is generated from
+# the working tree so local changes are included in the package.
+set -eu
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+"$ROOT/bin/build"
+
+VERSION="$(sed -n 's/^pkgver=//p' "$ROOT/pkgbuild/PKGBUILD")"
+SOURCE="$ROOT/pkgbuild/slate-$VERSION.tar.gz"
+
+rm -f "$SOURCE"
+tar -C "$ROOT" \
+    --exclude='./build' \
+    --exclude='./.git' \
+    --exclude='./pkgbuild' \
+    --transform "s|^\.|slate-$VERSION|" \
+    -czf "$SOURCE" .
+
+cd "$ROOT/pkgbuild"
+exec makepkg -f "$@"

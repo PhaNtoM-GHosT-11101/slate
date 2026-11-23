@@ -64,7 +64,8 @@ cd slate
 ```sh
 git clone https://github.com/PhaNtoM-GHosT-11101/slate.git
 cd slate
-./bin/install          # builds a tarball and runs makepkg -fsi
+./bin/install          # builds and installs the package
+./bin/package          # builds the package without installing it
 ```
 
 The generated package is
@@ -221,6 +222,14 @@ current value, and the circular hold-to-learn button.
 
 Commands are the one action that still uses **Apply changes**; key and mouse
 assignments save as soon as they are captured.
+
+### About
+
+The About page shows the app and Qt versions, the detected tablet, helper
+status, and links to the installation guide, contribution notes, security
+policy, and repository.
+
+![Slate about page](docs/slate-about.png)
 
 ## Configuration and state
 
@@ -406,11 +415,13 @@ mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME"
 rm -rf "$tmp"
 ```
 
-Build and install the Arch package:
+Build the Arch package without installing it:
 
 ```sh
-./bin/install
+./bin/package
 ```
+
+To build and install in one step, use `./bin/install`.
 
 The source layout:
 

@@ -26,15 +26,17 @@ Or edit **About → Topics** on the repository page.
 ```sh
 ./bin/build
 ./bin/test
+./bin/package
 git tag -a v0.2.0 -m "Slate 0.2.0"
 git push origin main
 git push origin v0.2.0
 gh release create v0.2.0 \
   --title "Slate 0.2.0" \
-  --notes-file docs/release-0.2.0.md
+  --notes-file docs/release-0.2.0.md \
+  pkgbuild/slate-0.2.0-1-x86_64.pkg.tar.zst
 ```
 
-Use a source tarball or a distribution package as the release asset. Do not
+The source tarball and the package are generated from the working tree. Do not
 upload a build that contains local configuration or a desktop user's data.
 
 ## Suggested pinned issue

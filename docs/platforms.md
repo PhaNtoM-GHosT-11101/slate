@@ -45,7 +45,8 @@ sudo pacman -S --needed base-devel qt6-base qt6-declarative qt6-wayland wtype xd
 sudo ./install.sh --no-deps
 ```
 
-For a proper package, use `./bin/install` or `makepkg -si` in `pkgbuild/`.
+For a proper package, use `./bin/package` to build it or `./bin/install` to
+build and install it.
 
 ### Debian and Ubuntu
 

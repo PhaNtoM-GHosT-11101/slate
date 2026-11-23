@@ -43,12 +43,20 @@ case "$PREFIX" in
     *) PREFIX_IS_USER=0 ;;
 esac
 
+NEED_ROOT=1
+if [ "$PREFIX_IS_USER" -eq 1 ] && [ "$REMOVE_RULES" -eq 0 ]; then
+    NEED_ROOT=0
+fi
+
 if [ "$(id -u)" -eq 0 ]; then
+    SUDO=""
+elif [ "$NEED_ROOT" -eq 0 ]; then
     SUDO=""
 elif command -v sudo >/dev/null 2>&1; then
     SUDO="sudo"
 else
     echo "uninstall.sh: sudo is required to remove /etc/udev rules." >&2
+    echo "Use --no-udev for a per-user install that left the rules alone." >&2
     exit 1
 fi
 

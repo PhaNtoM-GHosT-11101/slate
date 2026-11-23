@@ -42,6 +42,28 @@ Rectangle {
         return qsTr("Swallowed")
     }
 
+    // Anchor the chooser under the value field instead of letting it open at
+    // the window origin. Shared by pointer and keyboard activation. When the
+    // row is near the bottom of the window, the menu opens above the field so
+    // all nine actions stay reachable.
+    function openValueMenu() {
+        const menuWidth = mouseMenu.width
+        const menuHeight = mouseMenu.implicitHeight
+        const p = mouseChooser.mapToItem(root, mouseChooser.width / 2,
+                                         mouseChooser.height + 4)
+        const winHeight = root.window ? root.window.height : root.height
+        const rootTop = root.mapToItem(null, 0, 0).y
+
+        let x = Math.max(4, Math.min(p.x - menuWidth / 2,
+                                     root.width - menuWidth - 4))
+        let y = p.y
+        if (rootTop + y + menuHeight > winHeight - 8)
+            y = p.y - mouseChooser.height - menuHeight - 8
+        y = Math.max(8 - rootTop, Math.min(y, winHeight - rootTop - menuHeight - 8))
+
+        mouseMenu.popup(x, y)
+    }
+
     Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
@@ -188,12 +210,25 @@ Rectangle {
             }
 
             Rectangle {
+                id: mouseChooser
+
                 anchors.fill: parent
                 visible: root.action === "mouse"
                 radius: 8
                 color: mouseHover.hovered ? "#16161b" : "#0f0f12"
                 border.width: 1
-                border.color: mouseHover.hovered ? "#3a3a44" : "#2f2f38"
+                border.color: activeFocus ? theme.accent
+                    : mouseHover.hovered ? "#3a3a44" : "#2f2f38"
+                activeFocusOnTab: true
+                Accessible.name: qsTr("Mouse action for express key %1").arg(root.keyIndex + 1)
+
+                Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_Space || event.key === Qt.Key_Return
+                            || event.key === Qt.Key_Enter) {
+                        root.openValueMenu()
+                        event.accepted = true
+                    }
+                }
 
                 Behavior on color { ColorAnimation { duration: 90 } }
 
@@ -230,13 +265,8 @@ Rectangle {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        // Anchor the chooser under the value field instead of
-                        // letting it open at the window origin.
-                        const p = mapToItem(root, width / 2, height + 4)
-                        mouseMenu.x = Math.max(4, Math.min(p.x - mouseMenu.width / 2,
-                                                         root.width - mouseMenu.width - 4))
-                        mouseMenu.y = p.y
-                        mouseMenu.popup()
+                        mouseChooser.forceActiveFocus()
+                        root.openValueMenu()
                     }
                 }
             }

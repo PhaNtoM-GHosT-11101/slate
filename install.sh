@@ -114,21 +114,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if [ ! -f "$ROOT/slate.pro" ]; then
-    if [ "$DRY_RUN" -eq 1 ]; then
-        echo "install.sh: --dry-run must be run from a Slate source tree." >&2
-        exit 1
-    fi
-    echo "==> Downloading Slate"
-    if ! command -v git >/dev/null 2>&1; then
-        echo "install.sh: git is required to download the source." >&2
-        exit 1
-    fi
-    CLEANUP="$(mktemp -d)"
-    run git clone --depth=1 "$ORIGIN" "$CLEANUP/slate"
-    ROOT="$CLEANUP/slate"
-fi
-
 echo "==> Detecting distribution"
 DISTRO="unknown"
 if command -v pacman >/dev/null 2>&1; then
@@ -181,6 +166,24 @@ install_deps() {
 
 if [ "$INSTALL_DEPS" -eq 1 ]; then
     install_deps
+fi
+
+# The one-line installer may run before git is available. Dependency
+# installation above includes git, so download only after that step.
+if [ ! -f "$ROOT/slate.pro" ]; then
+    if [ "$DRY_RUN" -eq 1 ]; then
+        echo "install.sh: --dry-run must be run from a Slate source tree." >&2
+        exit 1
+    fi
+    echo "==> Downloading Slate"
+    if ! command -v git >/dev/null 2>&1; then
+        echo "install.sh: git is required to download the source." >&2
+        echo "Install git, or clone the repository and run ./install.sh." >&2
+        exit 1
+    fi
+    CLEANUP="$(mktemp -d)"
+    run git clone --depth=1 "$ORIGIN" "$CLEANUP/slate"
+    ROOT="$CLEANUP/slate"
 fi
 
 missing=""
@@ -272,16 +275,22 @@ if [ "$INSTALL_SERVICE" -eq 1 ] && command -v systemctl >/dev/null 2>&1; then
     fi
 fi
 
+if [ "$INSTALL_RULES" -eq 1 ]; then
+    UDEV_STEP="Reconnect the tablet so udev applies the new access rules."
+else
+    UDEV_STEP="Make sure the tablet and uinput udev rules are installed (see docs/platforms.md)."
+fi
+
 cat <<EOF
 
 Slate is installed.
 
   1. Start it from the app launcher or run: $PREFIX/bin/slate
-  2. Reconnect the tablet so udev applies the new access rules.
+  2. $UDEV_STEP
   3. Turn on "Remap express keys" on the Express keys page.
 
-Mouse actions need the uinput rule installed by this script. Shortcuts on
-Wayland need wtype; on X11 they need xdotool. See docs/platforms.md for
-Windows, macOS, and other-desktop guidance, or docs/installation.md for
-per-user installs and upgrades.
+Mouse actions need the /dev/uinput rule. Shortcuts on Wayland need wtype; on
+X11 they need xdotool. See docs/platforms.md for Windows, macOS, and
+other-desktop guidance, or docs/installation.md for per-user installs and
+upgrades.
 EOF
