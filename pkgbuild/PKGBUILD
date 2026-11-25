@@ -1,44 +1,39 @@
-# Maintainer: Aditya <aditya@localhost>
-pkgname=slate
+# Maintainer: Aditya Priyadarshi <240161640+PhaNtoM-GHosT-11101@users.noreply.github.com>
+pkgname=slate-veikk
 pkgver=0.2.0
 pkgrel=1
-pkgdesc="Settings app and express-key helper for the VEIKK A15 drawing tablet"
+pkgdesc="Qt 6 settings app and express-key helper for the VEIKK A15 drawing tablet"
 arch=('x86_64')
 url="https://github.com/PhaNtoM-GHosT-11101/slate"
 license=('MIT')
-depends=('qt6-base' 'qt6-declarative' 'qt6-wayland' 'wtype')
-makedepends=('qt6-base' 'qt6-declarative')
-optdepends=('hyprland: required for screen mapping and tablet settings'
-            'xdotool: replay shortcuts on X11 sessions')
-source=("slate-$pkgver.tar.gz"
-        "slate.desktop"
-        "slate.svg"
-        "slate.service"
-        "70-slate-veikk-a15.rules"
-        "71-slate-uinput.rules"
-        "61-veikk-a15.hwdb")
-sha256sums=('SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP')
+depends=('qt6-base' 'qt6-declarative' 'qt6-wayland')
+optdepends=(
+  'hyprland: screen mapping and tablet settings'
+  'wtype: inject shortcuts on Wayland'
+  'xdotool: inject shortcuts on X11'
+)
+install="$pkgname.install"
+source=("$pkgname-$pkgver.tar.gz::https://github.com/PhaNtoM-GHosT-11101/slate/archive/v$pkgver.tar.gz")
+sha256sums=('72fb9927d16a3d9fbc61920f033be93934c73cf86e9e60de415cc3a9c897de78')
 
 build() {
-    cd "$srcdir/slate-$pkgver"
-    qmake6 PREFIX=/usr slate.pro
-    make
+  cd "slate-$pkgver"
+  qmake6 slate.pro
+  make
 }
 
 package() {
-    cd "$srcdir/slate-$pkgver"
-    install -Dm755 slate "$pkgdir/usr/bin/slate"
-    install -Dm644 "$srcdir/slate.desktop" "$pkgdir/usr/share/applications/slate.desktop"
-    install -Dm644 "$srcdir/slate.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/slate.svg"
-    install -Dm644 "$srcdir/slate.service" "$pkgdir/usr/lib/systemd/user/slate.service"
-    install -Dm644 "$srcdir/70-slate-veikk-a15.rules" "$pkgdir/usr/lib/udev/rules.d/70-slate-veikk-a15.rules"
-    install -Dm644 "$srcdir/71-slate-uinput.rules" "$pkgdir/usr/lib/udev/rules.d/71-slate-uinput.rules"
-    install -Dm644 "$srcdir/61-veikk-a15.hwdb" "$pkgdir/usr/lib/udev/hwdb.d/61-veikk-a15.hwdb"
-    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  cd "slate-$pkgver"
+
+  install -Dm755 slate "$pkgdir/usr/bin/slate"
+
+  install -Dm644 pkgbuild/slate.desktop "$pkgdir/usr/share/applications/slate.desktop"
+  install -Dm644 pkgbuild/slate.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/slate.svg"
+  install -Dm644 pkgbuild/slate.service "$pkgdir/usr/lib/systemd/user/slate.service"
+
+  install -Dm644 pkgbuild/70-slate-veikk-a15.rules "$pkgdir/usr/lib/udev/rules.d/70-slate-veikk-a15.rules"
+  install -Dm644 pkgbuild/71-slate-uinput.rules "$pkgdir/usr/lib/udev/rules.d/71-slate-uinput.rules"
+  install -Dm644 pkgbuild/61-veikk-a15.hwdb "$pkgdir/usr/lib/udev/hwdb.d/61-veikk-a15.hwdb"
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

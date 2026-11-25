@@ -1,0 +1,10 @@
+post_install() {
+  systemd-hwdb update
+  udevadm control --reload-rules
+  udevadm trigger --subsystem-match=usb --action=change
+  udevadm trigger --subsystem-match=input --action=change
+}
+
+post_upgrade() {
+  post_install
+}
