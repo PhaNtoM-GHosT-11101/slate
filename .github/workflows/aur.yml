@@ -1,0 +1,90 @@
+name: aur
+
+# Publishes pkgbuild/ to the AUR whenever a GitHub release is published.
+#
+# Setup (one time):
+#   1. Create the package on the AUR once, following pkgbuild/README.md.
+#   2. Add the private half of the AUR key as a repository secret named
+#      AUR_SSH_PRIVATE_KEY:
+#        gh secret set AUR_SSH_PRIVATE_KEY -R <owner>/<repo> < ~/.ssh/id_ed25519_aur
+#
+# After that, publishing a release bumps pkgver, recomputes the checksum,
+# regenerates .SRCINFO and pushes to the AUR. Nothing to do by hand.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    timeout-minutes: 20
+
+    steps:
+      - name: Install dependencies
+        run: pacman -Syu --noconfirm --needed git openssh nodejs
+
+      - name: Check for the AUR key
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
+            echo "::error::Add AUR_SSH_PRIVATE_KEY as a repository secret — see pkgbuild/README.md"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+
+      - name: Read the release version
+        id: release
+        run: echo "pkgver=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Update PKGBUILD and .SRCINFO
+        working-directory: pkgbuild
+        run: |
+          pkgver="${{ steps.release.outputs.pkgver }}"
+          url="https://github.com/${{ github.repository }}/archive/v${pkgver}.tar.gz"
+
+          curl -fsSL -o /tmp/source.tar.gz "$url"
+          sum=$(sha256sum /tmp/source.tar.gz | cut -d' ' -f1)
+
+          sed -i \
+            -e "s/^pkgver=.*/pkgver=${pkgver}/" \
+            -e "s/^pkgrel=.*/pkgrel=1/" \
+            -e "s/^sha256sums=.*/sha256sums=('${sum}')/" \
+            PKGBUILD
+
+          useradd -m builder
+          chown -R builder:builder .
+          su builder -c "makepkg --printsrcinfo" > .SRCINFO
+
+      - name: Push to the AUR
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t ed25519 aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git clone --depth 1 ssh://aur@aur.archlinux.org/slate-veikk.git /tmp/aur
+
+          cp pkgbuild/PKGBUILD pkgbuild/.SRCINFO pkgbuild/slate-veikk.install /tmp/aur/
+
+          cd /tmp/aur
+          git add -A
+          if git diff --cached --quiet; then
+            echo "AUR is already at ${{ steps.release.outputs.pkgver }}, nothing to publish"
+            exit 0
+          fi
+
+          git commit -m "upgpkg: slate-veikk ${{ steps.release.outputs.pkgver }}-1"
+          git push origin master
