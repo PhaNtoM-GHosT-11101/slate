@@ -1,0 +1,91 @@
+name: opencode
+
+# Summon the agent by commenting `/oc <what you want>` on an issue or pull request.
+# Only the repository owner can trigger it, so strangers cannot spend your credits.
+#
+# Setup (one time):
+#   1. Create a key at https://opencode.ai/console
+#   2. Repository → Settings → Secrets and variables → Actions → New repository secret
+#      Name: OPENCODE_API_KEY
+#   3. Optional: add a repository *variable* named OPENCODE_MODEL to override the model.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: opencode-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  opencode:
+    if: >
+      github.event.comment.user.login == github.repository_owner &&
+      (contains(github.event.comment.body, '/oc') ||
+       contains(github.event.comment.body, '/opencode'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check for an API key
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: |
+          if [ -z "$OPENCODE_API_KEY" ]; then
+            echo "::error::Add OPENCODE_API_KEY as a repository secret — get one at https://opencode.ai/console"
+            exit 1
+          fi
+
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Switch to the pull request branch
+        if: github.event.issue.pull_request || github.event.pull_request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: gh pr checkout "$PR"
+
+      - name: Install OpenCode
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+
+      - name: Configure git
+        run: |
+          git config user.name "opencode[bot]"
+          git config user.email "opencode@users.noreply.github.com"
+
+      - name: Run OpenCode
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT: ${{ github.event.comment.body }}
+          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          MODEL: ${{ vars.OPENCODE_MODEL || 'opencode/deepseek-v4.1-flash-free' }}
+        run: |
+          opencode run --standalone --auto --archived --model "$MODEL" \
+            "You are working in the repository $GITHUB_REPOSITORY, on branch $(git branch --show-current).
+
+          A maintainer replied on #$NUMBER with:
+
+          ---
+          $COMMENT
+          ---
+
+          Do the work that comment asks for. Then:
+          1. Commit the change on a new branch named opencode/$NUMBER.
+          2. Push it and open a pull request that references #$NUMBER.
+          3. Comment on #$NUMBER with a short summary and a link to the pull request.
+
+          Never push directly to the default branch. If the request is a question rather than a change, just answer it on #$NUMBER and stop."
